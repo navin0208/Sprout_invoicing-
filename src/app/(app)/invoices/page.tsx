@@ -63,10 +63,21 @@ function InvoicesInner() {
         title="Invoices"
         subtitle={loading ? undefined : `${invoices.length} shown · ${formatMoney(totalOutstanding)} outstanding`}
         actions={
-          <Link href="/invoices/new" className="btn-primary">
-            <Icon name="plus" className="w-4 h-4" />
-            New invoice
-          </Link>
+          <div className="flex items-center gap-2">
+            <a
+              href="/api/export/excel?type=invoices"
+              download
+              className="btn-secondary"
+              title="Export all invoices to Excel"
+            >
+              <Icon name="fileSpreadsheet" className="w-4 h-4 text-emerald-600" />
+              Export Excel
+            </a>
+            <Link href="/invoices/new" className="btn-primary">
+              <Icon name="plus" className="w-4 h-4" />
+              New invoice
+            </Link>
+          </div>
         }
       />
 

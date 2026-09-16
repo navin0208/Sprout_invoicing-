@@ -536,6 +536,34 @@ export default function SettingsPage() {
           </div>
         </Section>
 
+        <Section
+          title="Data Reports & Offline Backups"
+          description="Export all your organization data to Microsoft Excel (.xlsx) or download a complete raw JSON database backup for offline record keeping."
+          icon="fileSpreadsheet"
+        >
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="/api/export/excel?type=all"
+              download
+              className="btn-primary"
+            >
+              <Icon name="fileSpreadsheet" className="w-4 h-4 text-emerald-300" />
+              Download Full Excel Report (.xlsx)
+            </a>
+            <a
+              href="/api/export/json"
+              download
+              className="btn-secondary"
+            >
+              <Icon name="download" className="w-4 h-4" />
+              Download Raw JSON Backup (.json)
+            </a>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            The Excel workbook includes sheets for Summary, Invoices, Payments, Quotations, Clients, and Catalog Items. The JSON backup is a complete snapshot of all tables.
+          </p>
+        </Section>
+
         <section className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100">
             <h2 className="section-title">Recent reminder activity</h2>

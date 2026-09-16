@@ -175,6 +175,15 @@ export default async function DashboardPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
+              <a
+                href="/api/export/excel?type=all"
+                download
+                className="btn border border-white/25 text-white hover:bg-white/10 active:scale-[.98]"
+                title="Download comprehensive Excel workbook with all invoices, payments, quotations & clients"
+              >
+                <Icon name="fileSpreadsheet" className="w-4 h-4 text-emerald-300" />
+                Export Excel Report
+              </a>
               <Link href="/invoices/new" className="btn-gold">
                 <Icon name="plus" className="w-4 h-4" />
                 New invoice

@@ -70,10 +70,21 @@ export default function ClientsPage() {
         title="Clients"
         subtitle={loading ? undefined : `${clients.length} client${clients.length === 1 ? '' : 's'} · ${formatMoney(totalOutstanding)} owed to you`}
         actions={
-          <button className="btn-primary" onClick={() => setShowForm(true)}>
-            <Icon name="plus" className="w-4 h-4" />
-            Add client
-          </button>
+          <div className="flex items-center gap-2">
+            <a
+              href="/api/export/excel?type=clients"
+              download
+              className="btn-secondary"
+              title="Export all clients to Excel"
+            >
+              <Icon name="fileSpreadsheet" className="w-4 h-4 text-emerald-600" />
+              Export Excel
+            </a>
+            <button className="btn-primary" onClick={() => setShowForm(true)}>
+              <Icon name="plus" className="w-4 h-4" />
+              Add client
+            </button>
+          </div>
         }
       />
 

@@ -65,10 +65,21 @@ export default function QuotationsPage() {
         title="Quotations"
         subtitle={loading ? undefined : `${quotations.length} shown · ${formatMoney(openValue)} awaiting a reply`}
         actions={
-          <Link href="/quotations/new" className="btn-primary">
-            <Icon name="plus" className="w-4 h-4" />
-            New quotation
-          </Link>
+          <div className="flex items-center gap-2">
+            <a
+              href="/api/export/excel?type=quotations"
+              download
+              className="btn-secondary"
+              title="Export all quotations to Excel"
+            >
+              <Icon name="fileSpreadsheet" className="w-4 h-4 text-emerald-600" />
+              Export Excel
+            </a>
+            <Link href="/quotations/new" className="btn-primary">
+              <Icon name="plus" className="w-4 h-4" />
+              New quotation
+            </Link>
+          </div>
         }
       />
 
