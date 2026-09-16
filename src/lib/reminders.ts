@@ -14,15 +14,22 @@ function daysBetween(a: Date, b: Date): number {
 // Flips any active invoice whose due date has passed into OVERDUE status.
 // Safe to call often (dashboard loads, before the reminder sweep, etc).
 export async function syncOverdueStatuses() {
-  const today = new Date();
-  const candidates = await prisma.invoice.findMany({
-    where: { status: { in: ['SENT', 'VIEWED', 'PARTIALLY_PAID'] } }
-  });
-  const overdueIds = candidates.filter((inv) => daysBetween(today, inv.dueDate) > 0).map((i) => i.id);
-  if (overdueIds.length) {
-    await prisma.invoice.updateMany({ where: { id: { in: overdueIds } }, data: { status: 'OVERDUE' } });
+  try {
+    if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.startsWith('postgres')) {
+      return 0;
+    }
+    const today = new Date();
+    const candidates = await prisma.invoice.findMany({
+      where: { status: { in: ['SENT', 'VIEWED', 'PARTIALLY_PAID'] } }
+    });
+    const overdueIds = candidates.filter((inv) => daysBetween(today, inv.dueDate) > 0).map((i) => i.id);
+    if (overdueIds.length) {
+      await prisma.invoice.updateMany({ where: { id: { in: overdueIds } }, data: { status: 'OVERDUE' } });
+    }
+    return overdueIds.length;
+  } catch (e) {
+    return 0;
   }
-  return overdueIds.length;
 }
 
 function reminderEmailHtml(opts: {

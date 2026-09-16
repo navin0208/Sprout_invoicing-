@@ -51,13 +51,123 @@ function StatCard({
   );
 }
 
-export default async function DashboardPage() {
-  await syncOverdueStatuses();
+function DatabaseSetupNotice() {
+  return (
+    <>
+      <Topbar title="Dashboard" subtitle="Database configuration required" />
+      <main className="p-6 max-w-[1000px] mx-auto space-y-6 animate-slide-up">
+        <div className="card p-8 border-2 border-brand-200 bg-gradient-to-br from-white via-white to-brand-50/40 shadow-lift">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+              <Icon name="alert" className="w-5 h-5" />
+            </span>
+            <div>
+              <h1 className="text-xl font-bold text-brand-900">Connect Your Database to Save Data</h1>
+              <p className="text-xs text-gray-500">Your organization portal is running live on Vercel!</p>
+            </div>
+          </div>
 
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-  const inSevenDays = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+          <p className="text-sm text-gray-600 leading-relaxed mb-6">
+            To start creating and permanently storing invoices, quotations, clients, and generating Excel reports, connect a free PostgreSQL database (Neon, Supabase, or Vercel Postgres).
+          </p>
+
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-200 space-y-4 mb-6">
+            <h2 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Quick Setup (2 Minutes):</h2>
+            <ol className="text-sm text-gray-600 space-y-3 list-decimal list-inside">
+              <li>
+                Create a free PostgreSQL database at{' '}
+                <a href="https://neon.tech" target="_blank" rel="noopener noreferrer" className="text-brand-600 font-medium underline">
+                  Neon.tech
+                </a>{' '}
+                or{' '}
+                <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-brand-600 font-medium underline">
+                  Supabase.com
+                </a>.
+              </li>
+              <li>
+                Copy your connection string (starts with{' '}
+                <code className="bg-gray-200 px-1.5 py-0.5 rounded text-xs text-brand-800 font-mono">
+                  postgresql://...
+                </code>
+                ).
+              </li>
+              <li>
+                In your{' '}
+                <a href="https://vercel.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-brand-600 font-medium underline">
+                  Vercel Project Dashboard
+                </a>{' '}
+                → <strong>Settings</strong> → <strong>Environment Variables</strong>:
+                <div className="mt-1.5 ml-5 text-xs bg-white p-2.5 rounded border border-gray-200 font-mono">
+                  Key: <strong>DATABASE_URL</strong>
+                  <br />
+                  Value: <strong>postgresql://username:password@...neon.tech/neondb?sslmode=require</strong>
+                </div>
+              </li>
+              <li>Go to the <strong>Deployments</strong> tab in Vercel and click <strong>Redeploy</strong>.</li>
+            </ol>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="https://neon.tech"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary"
+            >
+              Get Free PostgreSQL on Neon ↗
+            </a>
+            <a
+              href="https://vercel.com/dashboard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-secondary"
+            >
+              Open Vercel Settings ↗
+            </a>
+          </div>
+        </div>
+      </main>
+    </>
+  );
+}
+
+function DatabaseConnectionError({ error }: { error: string }) {
+  return (
+    <>
+      <Topbar title="Dashboard" subtitle="Database Connection Issue" />
+      <main className="p-6 max-w-[1000px] mx-auto space-y-6">
+        <div className="card p-6 border border-red-200 bg-red-50/50">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center">
+              <Icon name="alert" className="w-4 h-4" />
+            </span>
+            <h2 className="text-base font-semibold text-red-900">Database Connection Error</h2>
+          </div>
+          <p className="text-xs text-red-700 font-mono bg-white/80 p-3 rounded border border-red-100 mb-4 break-all">
+            {error}
+          </p>
+          <p className="text-xs text-gray-600">
+            Please verify that your <code className="font-mono font-semibold">DATABASE_URL</code> in Vercel Environment Variables is correct, reachable, and includes <code className="font-mono">?sslmode=require</code>.
+          </p>
+        </div>
+      </main>
+    </>
+  );
+}
+
+export default async function DashboardPage() {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl || (!dbUrl.startsWith('postgres://') && !dbUrl.startsWith('postgresql://'))) {
+    return <DatabaseSetupNotice />;
+  }
+
+  try {
+    await syncOverdueStatuses();
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const inSevenDays = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
 
   const [
     outstanding,
@@ -325,4 +435,8 @@ export default async function DashboardPage() {
       </main>
     </>
   );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return <DatabaseConnectionError error={message} />;
+  }
 }
