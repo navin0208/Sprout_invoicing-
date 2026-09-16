@@ -2,7 +2,13 @@ import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 
+export const authSecret =
+  process.env.NEXTAUTH_SECRET ||
+  process.env.AUTH_SECRET ||
+  'sprout-invoicing-production-fallback-secret-2024-secure';
+
 export const authOptions: NextAuthOptions = {
+  secret: authSecret,
   session: { strategy: 'jwt' },
   pages: { signIn: '/login' },
   providers: [

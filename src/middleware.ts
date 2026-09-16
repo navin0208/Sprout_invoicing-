@@ -1,7 +1,11 @@
 import { withAuth } from 'next-auth/middleware';
 
 export default withAuth({
-  pages: { signIn: '/login' }
+  pages: { signIn: '/login' },
+  secret:
+    process.env.NEXTAUTH_SECRET ||
+    process.env.AUTH_SECRET ||
+    'sprout-invoicing-production-fallback-secret-2024-secure'
 });
 
 // Everything under the app is protected except: NextAuth's own routes, the
@@ -14,6 +18,6 @@ export default withAuth({
 // in. Leave it out and the logo silently 307s to /login and shows broken.
 export const config = {
   matcher: [
-    '/((?!api/auth|login|p/|api/public|brand/|_next/static|_next/image|favicon.ico).*)'
+    '/((?!api/auth|login|p/|api/public|brand/|_next/static|_next/image|favicon.*).*)'
   ]
 };
