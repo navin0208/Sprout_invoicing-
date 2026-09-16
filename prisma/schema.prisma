@@ -1,0 +1,210 @@
+// Invoicing & Quotation app schema.
+//
+// Money is stored as integers in the currency's smallest unit (e.g. paise
+// for INR, cents for USD) to avoid floating point rounding errors. Divide by
+// 100 for display. Quantities and tax percentages are stored as floats since
+// they aren't subject to the same rounding concerns.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Single-row table holding business profile, numbering, tax defaults,
+// payment info and reminder rules. Always read/written with id = 1.
+model Settings {
+  id                  Int      @id @default(1)
+  businessName        String   @default("The Sprout Media")
+  email               String?
+  phone               String?
+  address             String?
+  logoDataUrl         String? // small logo stored inline as a data: URL
+  gstin               String? // optional, shown on PDFs/public pages if set
+  defaultCurrency     String   @default("INR")
+  defaultTaxName      String   @default("GST")
+  defaultTaxPercent   Float    @default(18)
+  invoicePrefix       String   @default("INV-")
+  nextInvoiceNumber   Int      @default(1)
+  quotePrefix         String   @default("QUO-")
+  nextQuoteNumber     Int      @default(1)
+  defaultTermsInvoice String?
+  defaultTermsQuote   String?
+  upiId               String? // e.g. name@bank — renders a payment QR code
+  bankDetails         String? // free text: account no, IFSC, bank name...
+
+  // Reminder rules. Day offsets are stored as JSON-encoded int arrays.
+  reminderBeforeDaysJson String @default("[3,1]") // days before due date
+  reminderOnDueDate      Boolean @default(true)
+  reminderAfterDaysJson  String @default("[1,3,7,14]") // days after due date, repeats
+  reminderMaxAfterCount  Int     @default(4) // stop after this many overdue reminders
+
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id              String   @id @default(cuid())
+  name            String
+  email           String?
+  phone           String?
+  billingAddress  String?
+  shippingAddress String?
+  gstin           String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  invoices   Invoice[]
+  quotations Quotation[]
+}
+
+// Reusable product/service catalog for quickly adding line items.
+model Item {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  unit        String  @default("unit")
+  rateCents   Int     @default(0)
+  taxPercent  Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Quotation {
+  id        String   @id @default(cuid())
+  publicId  String   @unique @default(cuid())
+  number    String   @unique
+  status    String   @default("DRAFT") // DRAFT, SENT, VIEWED, ACCEPTED, REJECTED, EXPIRED, CONVERTED
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  issueDate  DateTime @default(now())
+  expiryDate DateTime?
+  currency   String   @default("INR")
+
+  discountType    String @default("NONE") // NONE, PERCENT, FLAT
+  discountValue   Float  @default(0)
+
+  subtotalCents Int @default(0)
+  discountCents Int @default(0)
+  taxCents      Int @default(0)
+  totalCents    Int @default(0)
+
+  notes String?
+  terms String?
+
+  sentAt      DateTime?
+  viewedAt    DateTime?
+  respondedAt DateTime?
+  clientNote  String? // note left by the client when accepting/rejecting
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items    QuotationItem[]
+  invoices Invoice[] // invoice(s) this quotation was converted into
+}
+
+model QuotationItem {
+  id          String  @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  itemId      String?
+
+  description  String
+  quantity     Float  @default(1)
+  unit         String @default("unit")
+  rateCents    Int    @default(0)
+  taxPercent   Float  @default(0)
+  lineSubtotalCents Int @default(0)
+  lineTaxCents      Int @default(0)
+  lineTotalCents    Int @default(0)
+  sortOrder    Int    @default(0)
+}
+
+model Invoice {
+  id       String @id @default(cuid())
+  publicId String @unique @default(cuid())
+  number   String @unique
+  status   String @default("DRAFT") // DRAFT, SENT, VIEWED, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  quotationId String?
+  quotation   Quotation? @relation(fields: [quotationId], references: [id])
+
+  issueDate DateTime @default(now())
+  dueDate   DateTime
+  currency  String   @default("INR")
+
+  discountType  String @default("NONE") // NONE, PERCENT, FLAT
+  discountValue Float  @default(0)
+
+  subtotalCents   Int @default(0)
+  discountCents   Int @default(0)
+  taxCents        Int @default(0)
+  totalCents      Int @default(0)
+  amountPaidCents Int @default(0)
+  balanceDueCents Int @default(0)
+
+  notes String?
+  terms String?
+
+  sentAt           DateTime?
+  viewedAt         DateTime?
+  paidAt           DateTime?
+  lastReminderAt   DateTime?
+  reminderCount    Int       @default(0)
+  cancelledAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items     InvoiceItem[]
+  payments  Payment[]
+  reminders ReminderLog[]
+}
+
+model InvoiceItem {
+  id        String  @id @default(cuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  itemId    String?
+
+  description       String
+  quantity           Float  @default(1)
+  unit               String @default("unit")
+  rateCents          Int    @default(0)
+  taxPercent         Float  @default(0)
+  lineSubtotalCents  Int    @default(0)
+  lineTaxCents       Int    @default(0)
+  lineTotalCents     Int    @default(0)
+  sortOrder          Int    @default(0)
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amountCents Int
+  date      DateTime @default(now())
+  method    String   @default("Other") // Cash, Bank Transfer, UPI, Card, Other
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model ReminderLog {
+  id        String   @id @default(cuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  type      String // BEFORE_DUE, ON_DUE, OVERDUE, MANUAL
+  daysOffset Int // negative = before due, 0 = on due date, positive = days overdue
+  sentAt    DateTime @default(now())
+  success   Boolean  @default(true)
+  error     String?
+}
