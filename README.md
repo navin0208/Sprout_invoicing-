@@ -85,17 +85,29 @@ also:
   scheduler — handy if you deploy somewhere serverless where a long-running
   in-process cron isn't available (e.g. Vercel Cron calling that endpoint).
 
-## Production
+## Deploying to Vercel (Production / Organization Use)
 
-```bash
-npm run build
-npm run start
-```
+Because Vercel runs in a serverless, read-only environment, **a hosted PostgreSQL database is required** (e.g. Neon, Supabase, Vercel Postgres) so your invoices, clients, and settings are permanently preserved across refreshes and redeployments.
 
-`next start` is a long-running Node process, so the in-process reminder
-scheduler keeps working. Put it behind a reverse proxy (Caddy/Nginx) with
-HTTPS, and back up `prisma/dev.db` periodically — that one file is your
-entire database.
+### 1. Create a Free PostgreSQL Database
+- Go to [Neon](https://neon.tech) or [Supabase](https://supabase.com) and create a free project.
+- Copy your PostgreSQL connection string (starts with `postgresql://...`).
+
+### 2. Configure Environment Variables on Vercel
+In your Vercel Project Settings -> **Environment Variables**, add:
+- `DATABASE_URL`: Your PostgreSQL connection string (with `?sslmode=require`)
+- `APP_URL`: Your Vercel app domain (e.g. `https://your-app.vercel.app`)
+- `NEXTAUTH_URL`: Your Vercel app domain (e.g. `https://your-app.vercel.app`)
+- `NEXTAUTH_SECRET`: A long random secret (`openssl rand -base64 32`)
+- `ADMIN_EMAIL`: Your organization admin email
+- `ADMIN_PASSWORD_HASH`: Generated with `npm run make-admin -- email password`
+- `REMINDER_CRON_ENABLED`: `false` (Vercel uses Vercel Cron instead of in-process cron)
+- `CRON_SECRET`: Random string for Vercel Cron authentication
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`: Your email SMTP credentials
+
+### 3. Deploy
+When deploying, the build script automatically runs `prisma generate && prisma db push && next build` to create and sync all database tables automatically.
+
 
 ## Notes on scope
 
