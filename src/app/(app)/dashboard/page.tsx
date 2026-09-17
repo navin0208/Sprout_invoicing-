@@ -156,11 +156,6 @@ function DatabaseConnectionError({ error }: { error: string }) {
 }
 
 export default async function DashboardPage() {
-  const dbUrl = process.env.DATABASE_URL;
-  if (!dbUrl || (!dbUrl.startsWith('postgres://') && !dbUrl.startsWith('postgresql://'))) {
-    return <DatabaseSetupNotice />;
-  }
-
   try {
     await syncOverdueStatuses();
 

@@ -31,7 +31,15 @@ const nextConfig = {
         ...config.resolve.alias,
         'node-cron': false,
         nodemailer: false,
-        '@prisma/client': false
+        '@prisma/client': false,
+        '@/lib/prisma': false,
+        './lib/reminders': false
+      };
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false
       };
     }
     return config;

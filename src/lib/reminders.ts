@@ -15,9 +15,6 @@ function daysBetween(a: Date, b: Date): number {
 // Safe to call often (dashboard loads, before the reminder sweep, etc).
 export async function syncOverdueStatuses() {
   try {
-    if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.startsWith('postgres')) {
-      return 0;
-    }
     const today = new Date();
     const candidates = await prisma.invoice.findMany({
       where: { status: { in: ['SENT', 'VIEWED', 'PARTIALLY_PAID'] } }
