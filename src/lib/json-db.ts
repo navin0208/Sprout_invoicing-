@@ -41,6 +41,10 @@ export type Client = {
   updatedAt: Date;
   invoices: Invoice[];
   quotations: Quotation[];
+  _count: {
+    invoices: number;
+    quotations: number;
+  };
 };
 
 export type Item = {
@@ -289,12 +293,18 @@ function toDateNullable(d: any): Date | null {
 }
 
 function hydrateClient(c: any, db: DbSchema): Client {
+  const invoices = (db.invoices || []).filter((i: any) => i.clientId === c.id);
+  const quotations = (db.quotations || []).filter((q: any) => q.clientId === c.id);
   return {
     ...c,
     createdAt: toDate(c.createdAt),
     updatedAt: toDate(c.updatedAt),
-    invoices: (db.invoices || []).filter((i: any) => i.clientId === c.id).map((i: any) => hydrateInvoice(i, db)),
-    quotations: (db.quotations || []).filter((q: any) => q.clientId === c.id).map((q: any) => hydrateQuotation(q, db))
+    invoices: invoices.map((i: any) => hydrateInvoice(i, db)),
+    quotations: quotations.map((q: any) => hydrateQuotation(q, db)),
+    _count: {
+      invoices: invoices.length,
+      quotations: quotations.length
+    }
   };
 }
 
@@ -311,7 +321,8 @@ function hydrateInvoice(inv: any, db: DbSchema): Invoice {
     createdAt: new Date(),
     updatedAt: new Date(),
     invoices: [],
-    quotations: []
+    quotations: [],
+    _count: { invoices: 0, quotations: 0 }
   };
 
   const client: Client = {
@@ -319,7 +330,11 @@ function hydrateInvoice(inv: any, db: DbSchema): Invoice {
     createdAt: toDate(rawClient.createdAt),
     updatedAt: toDate(rawClient.updatedAt),
     invoices: [],
-    quotations: []
+    quotations: [],
+    _count: {
+      invoices: 0,
+      quotations: 0
+    }
   };
 
   const items: InvoiceItem[] = (inv.items || []).map((it: any) => ({ ...it }));
@@ -376,7 +391,8 @@ function hydrateQuotation(q: any, db: DbSchema): Quotation {
     createdAt: new Date(),
     updatedAt: new Date(),
     invoices: [],
-    quotations: []
+    quotations: [],
+    _count: { invoices: 0, quotations: 0 }
   };
 
   const client: Client = {
@@ -384,7 +400,11 @@ function hydrateQuotation(q: any, db: DbSchema): Quotation {
     createdAt: toDate(rawClient.createdAt),
     updatedAt: toDate(rawClient.updatedAt),
     invoices: [],
-    quotations: []
+    quotations: [],
+    _count: {
+      invoices: 0,
+      quotations: 0
+    }
   };
 
   const items: QuotationItem[] = (q.items || []).map((it: any) => ({ ...it }));

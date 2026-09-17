@@ -146,14 +146,14 @@ function InvoicesInner() {
                     <tr key={inv.id} className="row-link" onClick={() => router.push(`/invoices/${inv.id}`)}>
                       <td className="td">
                         <div className="flex items-center gap-3">
-                          <Avatar name={inv.client.name} />
+                          <Avatar name={inv.client?.name || 'Client'} />
                           <div className="min-w-0">
                             <Link
                               href={`/invoices/${inv.id}`}
                               className="block font-medium text-brand-800 hover:text-gold-700 truncate"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              {inv.client.name}
+                              {inv.client?.name || 'Client'}
                             </Link>
                             <span className="block text-xs text-gray-500">{inv.number}</span>
                           </div>

@@ -18,6 +18,6 @@ export default withAuth({
 // in. Leave it out and the logo silently 307s to /login and shows broken.
 export const config = {
   matcher: [
-    '/((?!api/auth|login|p/|api/public|brand/|_next/static|_next/image|favicon.*).*)'
+    '/((?!api/auth|api/db|login|p/|api/public|brand/|_next/static|_next/image|favicon.*).*)'
   ]
 };

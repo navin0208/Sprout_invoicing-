@@ -139,8 +139,8 @@ export default function ClientsPage() {
                 </div>
                 <div className="flex items-center justify-between border-t border-gray-100 pt-3">
                   <span className="text-xs text-gray-500">
-                    {client._count.invoices} invoice{client._count.invoices === 1 ? '' : 's'} · {client._count.quotations} quote
-                    {client._count.quotations === 1 ? '' : 's'}
+                    {client._count?.invoices ?? 0} invoice{(client._count?.invoices ?? 0) === 1 ? '' : 's'} · {client._count?.quotations ?? 0} quote
+                    {(client._count?.quotations ?? 0) === 1 ? '' : 's'}
                   </span>
                   {client.outstandingCents > 0 ? (
                     <span

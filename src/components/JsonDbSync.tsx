@@ -17,7 +17,10 @@ export function JsonDbSync() {
       try {
         const res = await fetch('/api/db/sync', { cache: 'no-store' });
         if (!res.ok) return;
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) return;
         const serverDb = await res.json();
+        if (!serverDb || typeof serverDb !== 'object') return;
 
         const localRaw = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
         let localDb: any = null;
