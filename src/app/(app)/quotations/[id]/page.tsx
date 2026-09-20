@@ -33,8 +33,8 @@ type QuotationDetail = {
   viewedAt: string | null;
   respondedAt: string | null;
   clientNote: string | null;
-  client: { id: string; name: string; email: string | null; phone: string | null };
-  items: {
+  client?: { id: string; name: string; email: string | null; phone: string | null } | null;
+  items?: {
     id: string;
     description: string;
     quantity: number;
@@ -43,7 +43,7 @@ type QuotationDetail = {
     taxPercent: number;
     lineTotalCents: number;
   }[];
-  invoices: {
+  invoices?: {
     id: string;
     number: string;
     status: string;
@@ -109,8 +109,9 @@ export default function QuotationDetailPage() {
   const isDraft = quotation.status === 'DRAFT';
   const accepted = quotation.status === 'ACCEPTED';
   const rejected = quotation.status === 'REJECTED';
-  const converted = quotation.status === 'CONVERTED' || quotation.invoices.length > 0;
-  const invoiceCount = quotation.invoices.length;
+  const invoices = quotation.invoices || [];
+  const converted = quotation.status === 'CONVERTED' || invoices.length > 0;
+  const invoiceCount = invoices.length;
   // A retainer quote gets invoiced every month, so this stays available
   // after the first conversion — each run creates a fresh editable draft.
   const convertLabel = invoiceCount === 0 ? 'Convert to invoice' : 'Create next invoice';
@@ -152,8 +153,8 @@ export default function QuotationDetailPage() {
   return (
     <>
       <Topbar
-        title={quotation.number}
-        subtitle={quotation.client.name}
+        title={quotation.number || 'Quotation'}
+        subtitle={quotation.client?.name || ''}
         actions={
           isDraft ? (
             <button
@@ -197,7 +198,7 @@ export default function QuotationDetailPage() {
                 <p className="text-xs text-gray-500 mt-0.5">
                   {invoiceCount} so far · billed{' '}
                   {formatMoney(
-                    quotation.invoices.filter((i) => i.status !== 'CANCELLED').reduce((s, i) => s + i.totalCents, 0),
+                    invoices.filter((i) => i.status !== 'CANCELLED').reduce((s, i) => s + (i.totalCents || 0), 0),
                     quotation.currency
                   )}{' '}
                   in total
@@ -210,7 +211,7 @@ export default function QuotationDetailPage() {
             </div>
             <table className="w-full">
               <tbody className="divide-y divide-gray-100">
-                {quotation.invoices.map((inv) => (
+                {invoices.map((inv) => (
                   <tr key={inv.id} className="row-link" onClick={() => router.push(`/invoices/${inv.id}`)}>
                     <td className="td font-medium text-brand-800">{inv.number}</td>
                     <td className="td text-xs text-gray-500 hidden sm:table-cell">{formatDate(inv.issueDate)}</td>
@@ -229,9 +230,9 @@ export default function QuotationDetailPage() {
 
         {quotation.clientNote ? (
           <div className="card p-4 flex gap-3">
-            <Avatar name={quotation.client.name} size="sm" />
+            <Avatar name={quotation.client?.name || 'Client'} size="sm" />
             <div>
-              <p className="text-xs text-gray-500 mb-0.5">{quotation.client.name} left a note when responding</p>
+              <p className="text-xs text-gray-500 mb-0.5">{quotation.client?.name || 'Client'} left a note when responding</p>
               <p className="text-sm text-brand-800">“{quotation.clientNote}”</p>
             </div>
           </div>
@@ -251,7 +252,7 @@ export default function QuotationDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {quotation.items.map((item) => (
+                  {(quotation.items || []).map((item) => (
                     <tr key={item.id}>
                       <td className="td">
                         <ItemDescription description={item.description} />
@@ -386,17 +387,21 @@ export default function QuotationDetailPage() {
 
             <section className="card p-5">
               <p className="label">Client</p>
-              <Link href={`/clients/${quotation.client.id}`} className="flex items-center gap-3 group">
-                <Avatar name={quotation.client.name} />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-brand-800 truncate group-hover:text-gold-700 transition-colors">
-                    {quotation.client.name}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {quotation.client.email || quotation.client.phone || 'No contact'}
-                  </p>
-                </div>
-              </Link>
+              {quotation.client ? (
+                <Link href={`/clients/${quotation.client.id}`} className="flex items-center gap-3 group">
+                  <Avatar name={quotation.client.name || 'Client'} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-brand-800 truncate group-hover:text-gold-700 transition-colors">
+                      {quotation.client.name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {quotation.client.email || quotation.client.phone || 'No contact'}
+                    </p>
+                  </div>
+                </Link>
+              ) : (
+                <p className="text-sm text-gray-400">No client details</p>
+              )}
             </section>
 
             {isDraft ? (

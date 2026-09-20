@@ -77,7 +77,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     })
   ]);
 
-  const quotation = await prisma.quotation.findUnique({ where: { id: params.id }, include: { items: true, client: true } });
+  const quotation = await prisma.quotation.findUnique({ where: { id: params.id }, include: { items: true, client: true, invoices: true } });
   return NextResponse.json(quotation);
 }
 

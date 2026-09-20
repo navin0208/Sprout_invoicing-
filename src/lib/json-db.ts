@@ -174,8 +174,10 @@ export type Quotation = {
   updatedAt: Date;
   items: QuotationItem[];
   client: Client;
+  invoices: Invoice[];
   _count?: {
     items?: number;
+    invoices?: number;
   };
 };
 
@@ -408,6 +410,9 @@ function hydrateQuotation(q: any, db: DbSchema): Quotation {
   };
 
   const items: QuotationItem[] = (q.items || []).map((it: any) => ({ ...it }));
+  const invoices: Invoice[] = (db.invoices || [])
+    .filter((inv: any) => inv.quotationId === q.id)
+    .map((inv: any) => hydrateInvoice(inv, db));
 
   return {
     ...q,
@@ -420,8 +425,10 @@ function hydrateQuotation(q: any, db: DbSchema): Quotation {
     updatedAt: toDate(q.updatedAt),
     items,
     client,
+    invoices,
     _count: {
-      items: items.length
+      items: items.length,
+      invoices: invoices.length
     }
   };
 }

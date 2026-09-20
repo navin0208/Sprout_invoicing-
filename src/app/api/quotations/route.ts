@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         })
       }
     },
-    include: { items: true, client: true }
+    include: { items: true, client: true, invoices: true }
   });
 
   return NextResponse.json(quotation, { status: 201 });

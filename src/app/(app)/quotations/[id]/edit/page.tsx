@@ -24,7 +24,7 @@ export default function EditQuotationPage() {
         discountValue: q.discountValue,
         notes: q.notes ?? '',
         terms: q.terms ?? '',
-        items: q.items.map((it: any) => ({
+        items: (q.items || []).map((it: any) => ({
           itemId: it.itemId,
           description: it.description,
           quantity: it.quantity,
