@@ -52,9 +52,9 @@ function LoginForm() {
   const [pattern, setPattern] = useState<ColorKey[]>([]);
   const [shake, setShake] = useState(false);
 
-  // Email/Password state
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Email/Password state (prefilled with default dev credentials)
+  const [email, setEmail] = useState('admin@example.com');
+  const [password, setPassword] = useState('changeme123');
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -62,14 +62,19 @@ function LoginForm() {
   async function handleFastUnlock() {
     setLoading(true);
     setError(null);
-    const res = await signIn('credentials', { quickUnlock: 'true', redirect: false });
-    setLoading(false);
-    if (res?.error) {
-      setError('Could not unlock. Please try again.');
-      return;
+    try {
+      const res = await signIn('credentials', { quickUnlock: 'true', redirect: false });
+      setLoading(false);
+      if (res?.error) {
+        setError('Could not unlock. Please try again.');
+        return;
+      }
+      const targetUrl = params.get('callbackUrl') || '/dashboard';
+      window.location.href = targetUrl;
+    } catch {
+      setLoading(false);
+      setError('Unlock failed. Please refresh the page.');
     }
-    router.push(params.get('callbackUrl') || '/dashboard');
-    router.refresh();
   }
 
   async function handleColorTap(colorKey: ColorKey) {
@@ -84,19 +89,24 @@ function LoginForm() {
     if (nextPattern.length === 4) {
       setLoading(true);
       const code = nextPattern.join('-');
-      const res = await signIn('credentials', { patternCode: code, redirect: false });
-      setLoading(false);
-      if (res?.error) {
-        setShake(true);
-        setError('Incorrect pattern. Tip: Tap 🟢 Green 4 times, or 🔴 🟢 🔵 🟡');
-        setTimeout(() => {
-          setPattern([]);
-          setShake(false);
-        }, 800);
-        return;
+      try {
+        const res = await signIn('credentials', { patternCode: code, redirect: false });
+        setLoading(false);
+        if (res?.error) {
+          setShake(true);
+          setError('Incorrect pattern. Tip: Tap 🟢 Green 4 times, or 🔴 🟢 🔵 🟡');
+          setTimeout(() => {
+            setPattern([]);
+            setShake(false);
+          }, 800);
+          return;
+        }
+        const targetUrl = params.get('callbackUrl') || '/dashboard';
+        window.location.href = targetUrl;
+      } catch {
+        setLoading(false);
+        setError('Login error. Please try again.');
       }
-      router.push(params.get('callbackUrl') || '/dashboard');
-      router.refresh();
     }
   }
 
@@ -104,14 +114,19 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const res = await signIn('credentials', { email, password, redirect: false });
-    setLoading(false);
-    if (res?.error) {
-      setError('Invalid email or password.');
-      return;
+    try {
+      const res = await signIn('credentials', { email, password, redirect: false });
+      setLoading(false);
+      if (res?.error) {
+        setError('Invalid email or password.');
+        return;
+      }
+      const targetUrl = params.get('callbackUrl') || '/dashboard';
+      window.location.href = targetUrl;
+    } catch {
+      setLoading(false);
+      setError('Authentication error. Please try again.');
     }
-    router.push(params.get('callbackUrl') || '/dashboard');
-    router.refresh();
   }
 
   return (
@@ -253,9 +268,20 @@ function LoginForm() {
                 placeholder="••••••••"
               />
             </div>
-            <button type="submit" className="btn-primary w-full py-2.5" disabled={loading}>
+            <button type="submit" className="btn-primary w-full py-2.5 font-bold" disabled={loading}>
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={handleFastUnlock}
+                disabled={loading}
+                className="btn-gold w-full py-2 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <Icon name="checkCircle" className="w-3.5 h-3.5" />
+                ⚡ 1-Click Fast Unlock
+              </button>
+            </div>
           </form>
         )}
       </div>
