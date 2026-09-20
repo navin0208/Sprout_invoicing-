@@ -31,9 +31,11 @@ export type IconName =
   | 'trendUp'
   | 'inbox'
   | 'mail'
-  | 'fileSpreadsheet';
+  | 'fileSpreadsheet'
+  | 'arrowLeft';
 
 const PATHS: Record<IconName, React.ReactNode> = {
+  arrowLeft: <path d="m12 19-7-7 7-7M5 12h14" />,
   dashboard: (
     <>
       <rect x="3" y="3" width="7" height="9" rx="1.5" />
