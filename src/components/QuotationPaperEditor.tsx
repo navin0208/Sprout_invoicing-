@@ -567,6 +567,206 @@ export function QuotationPaperEditor({
     setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   }
 
+  function addBulletToLineDescription(lineId: string, currentVal: string) {
+    let nextVal = currentVal ? currentVal.trimEnd() : '';
+    if (!nextVal) {
+      nextVal = '• ';
+    } else {
+      nextVal = nextVal + '\n• ';
+    }
+    updateLine(lineId, { description: nextVal, showDescription: true });
+  }
+
+  function addNumberToLineDescription(lineId: string, currentVal: string) {
+    let nextVal = currentVal ? currentVal.trimEnd() : '';
+    if (!nextVal) {
+      nextVal = '1. ';
+    } else {
+      const linesArr = nextVal.split('\n');
+      const lastLine = linesArr[linesArr.length - 1];
+      const match = lastLine.match(/^(\d+)[\.\)]/);
+      const nextNum = match ? parseInt(match[1], 10) + 1 : linesArr.length + 1;
+      nextVal = nextVal + `\n${nextNum}. `;
+    }
+    updateLine(lineId, { description: nextVal, showDescription: true });
+  }
+
+  function formatLineDescriptionAsBullets(lineId: string, currentVal: string) {
+    if (!currentVal.trim()) {
+      updateLine(lineId, { description: '• ', showDescription: true });
+      return;
+    }
+    const linesArr = currentVal.split('\n');
+    const converted = linesArr
+      .map((l) => {
+        const trimmed = l.trim();
+        if (!trimmed) return '';
+        if (/^[•\-\*]\s*/.test(trimmed)) return trimmed;
+        const cleaned = trimmed.replace(/^\d+[\.\)]\s*/, '');
+        return `• ${cleaned}`;
+      })
+      .join('\n');
+    updateLine(lineId, { description: converted, showDescription: true });
+    toast.success('Description formatted with bullets.');
+  }
+
+  function handleDescriptionKeyDown(
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    lineId: string,
+    currentVal: string
+  ) {
+    if (e.key === 'Enter') {
+      const textarea = e.currentTarget;
+      const selStart = textarea.selectionStart;
+      const selEnd = textarea.selectionEnd;
+      const textBefore = currentVal.slice(0, selStart);
+      const textAfter = currentVal.slice(selEnd);
+
+      const lastLineBreak = textBefore.lastIndexOf('\n');
+      const currentLine = lastLineBreak === -1 ? textBefore : textBefore.slice(lastLineBreak + 1);
+
+      const bulletMatch = currentLine.match(/^(\s*)([•\-\*])\s*(.*)$/);
+      const numberMatch = currentLine.match(/^(\s*)(\d+)[\.\)]\s*(.*)$/);
+
+      if (bulletMatch) {
+        e.preventDefault();
+        const [_, indent, bullet, content] = bulletMatch;
+        if (!content.trim()) {
+          const newTextBefore = lastLineBreak === -1 ? '' : textBefore.slice(0, lastLineBreak + 1);
+          const nextVal = newTextBefore + textAfter;
+          updateLine(lineId, { description: nextVal });
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = newTextBefore.length;
+          }, 0);
+        } else {
+          const insertion = `\n${indent}${bullet} `;
+          const nextVal = textBefore + insertion + textAfter;
+          updateLine(lineId, { description: nextVal });
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = selStart + insertion.length;
+          }, 0);
+        }
+      } else if (numberMatch) {
+        e.preventDefault();
+        const [_, indent, numStr, content] = numberMatch;
+        if (!content.trim()) {
+          const newTextBefore = lastLineBreak === -1 ? '' : textBefore.slice(0, lastLineBreak + 1);
+          const nextVal = newTextBefore + textAfter;
+          updateLine(lineId, { description: nextVal });
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = newTextBefore.length;
+          }, 0);
+        } else {
+          const nextNum = parseInt(numStr, 10) + 1;
+          const insertion = `\n${indent}${nextNum}. `;
+          const nextVal = textBefore + insertion + textAfter;
+          updateLine(lineId, { description: nextVal });
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = selStart + insertion.length;
+          }, 0);
+        }
+      }
+    }
+  }
+
+  function handleAddBulletToTerms() {
+    let nextVal = terms ? terms.trimEnd() : '';
+    if (!nextVal) {
+      nextVal = '• ';
+    } else {
+      nextVal = nextVal + '\n• ';
+    }
+    setTerms(nextVal);
+  }
+
+  function handleAddNumberToTerms() {
+    let nextVal = terms ? terms.trimEnd() : '';
+    if (!nextVal) {
+      nextVal = '1. ';
+    } else {
+      const linesArr = nextVal.split('\n');
+      const lastLine = linesArr[linesArr.length - 1];
+      const match = lastLine.match(/^(\d+)[\.\)]/);
+      const nextNum = match ? parseInt(match[1], 10) + 1 : linesArr.length + 1;
+      nextVal = nextVal + `\n${nextNum}. `;
+    }
+    setTerms(nextVal);
+  }
+
+  function handleConvertTermsToBullets() {
+    if (!terms.trim()) {
+      setTerms('• ');
+      return;
+    }
+    const linesArr = terms.split('\n');
+    const converted = linesArr
+      .map((l) => {
+        const trimmed = l.trim();
+        if (!trimmed) return '';
+        if (/^[•\-\*]\s*/.test(trimmed)) return trimmed;
+        const cleaned = trimmed.replace(/^\d+[\.\)]\s*/, '');
+        return `• ${cleaned}`;
+      })
+      .join('\n');
+    setTerms(converted);
+    toast.success('Terms formatted as bullet points.');
+  }
+
+  function handleTermsKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter') {
+      const textarea = e.currentTarget;
+      const selStart = textarea.selectionStart;
+      const selEnd = textarea.selectionEnd;
+      const textBefore = terms.slice(0, selStart);
+      const textAfter = terms.slice(selEnd);
+
+      const lastLineBreak = textBefore.lastIndexOf('\n');
+      const currentLine = lastLineBreak === -1 ? textBefore : textBefore.slice(lastLineBreak + 1);
+
+      const bulletMatch = currentLine.match(/^(\s*)([•\-\*])\s*(.*)$/);
+      const numberMatch = currentLine.match(/^(\s*)(\d+)[\.\)]\s*(.*)$/);
+
+      if (bulletMatch) {
+        e.preventDefault();
+        const [_, indent, bullet, content] = bulletMatch;
+        if (!content.trim()) {
+          const newTextBefore = lastLineBreak === -1 ? '' : textBefore.slice(0, lastLineBreak + 1);
+          const nextVal = newTextBefore + textAfter;
+          setTerms(nextVal);
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = newTextBefore.length;
+          }, 0);
+        } else {
+          const insertion = `\n${indent}${bullet} `;
+          const nextVal = textBefore + insertion + textAfter;
+          setTerms(nextVal);
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = selStart + insertion.length;
+          }, 0);
+        }
+      } else if (numberMatch) {
+        e.preventDefault();
+        const [_, indent, numStr, content] = numberMatch;
+        if (!content.trim()) {
+          const newTextBefore = lastLineBreak === -1 ? '' : textBefore.slice(0, lastLineBreak + 1);
+          const nextVal = newTextBefore + textAfter;
+          setTerms(nextVal);
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = newTextBefore.length;
+          }, 0);
+        } else {
+          const nextNum = parseInt(numStr, 10) + 1;
+          const insertion = `\n${indent}${nextNum}. `;
+          const nextVal = textBefore + insertion + textAfter;
+          setTerms(nextVal);
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = selStart + insertion.length;
+          }, 0);
+        }
+      }
+    }
+  }
+
   function removeLine(id: string) {
     if (lines.length <= 1) {
       toast.info('At least one item is required in the document.');
@@ -810,7 +1010,7 @@ export function QuotationPaperEditor({
           />
 
           {/* Secondary Action Buttons beneath Item Name */}
-          <div className="flex items-center gap-3 pt-0.5 text-[11px]">
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
             <button
               type="button"
               onClick={() => updateLine(line.id, { showDescription: !line.showDescription })}
@@ -818,6 +1018,25 @@ export function QuotationPaperEditor({
             >
               <Icon name={line.showDescription ? 'x' : 'plus'} className="w-3 h-3" />
               {line.showDescription ? 'Hide Description' : '+ Add Description'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!line.showDescription) {
+                  updateLine(line.id, {
+                    showDescription: true,
+                    description: line.description ? line.description : '• '
+                  });
+                } else {
+                  addBulletToLineDescription(line.id, line.description);
+                }
+              }}
+              className="text-purple-700 hover:text-purple-900 font-semibold inline-flex items-center gap-1 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded border border-purple-200 transition-colors"
+              title="Add bullet points to item specifications"
+            >
+              <span className="font-bold text-sm leading-none">•</span>
+              + Add Bullet Points
             </button>
 
             <label className="text-purple-700 hover:text-purple-900 font-medium inline-flex items-center gap-1 cursor-pointer">
@@ -862,13 +1081,56 @@ export function QuotationPaperEditor({
 
           {/* Expanded Description Box */}
           {line.showDescription && (
-            <textarea
-              rows={2}
-              className="input py-1 text-xs w-full mt-1.5 resize-y text-gray-700"
-              placeholder="Detailed specifications or deliverables (line breaks create bullets on PDF)"
-              value={line.description}
-              onChange={(e) => updateLine(line.id, { description: e.target.value })}
-            />
+            <div className="mt-2 rounded-lg border border-purple-200 bg-purple-50/20 p-2 space-y-1.5 shadow-2xs">
+              <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                <span className="font-semibold text-gray-700 flex items-center gap-1">
+                  <Icon name="fileSpreadsheet" className="w-3 h-3 text-purple-600" />
+                  Item Specifications / Deliverables
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => addBulletToLineDescription(line.id, line.description)}
+                    className="px-2 py-0.5 rounded bg-white hover:bg-purple-100 text-purple-800 border border-purple-300 font-semibold text-[11px] inline-flex items-center gap-1 shadow-2xs transition-colors"
+                    title="Insert bullet point"
+                  >
+                    <span className="font-bold text-sm leading-none">•</span>
+                    Add Bullet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addNumberToLineDescription(line.id, line.description)}
+                    className="px-2 py-0.5 rounded bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 font-medium text-[11px] inline-flex items-center gap-1 shadow-2xs transition-colors"
+                    title="Insert numbered item"
+                  >
+                    <span className="font-bold text-xs leading-none">1.</span>
+                    Numbered
+                  </button>
+                  {line.description.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => formatLineDescriptionAsBullets(line.id, line.description)}
+                      className="px-2 py-0.5 rounded bg-white hover:bg-gray-100 text-gray-600 border border-gray-300 text-[10px] hover:text-purple-700 shadow-2xs transition-colors"
+                      title="Convert all lines to bullets"
+                    >
+                      Format Bullets
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <textarea
+                rows={4}
+                className="input p-2.5 text-xs sm:text-sm w-full min-h-[105px] resize-y text-gray-800 leading-relaxed bg-white border border-gray-300 rounded-md focus:border-purple-600 focus:ring-1 focus:ring-purple-600 shadow-inner"
+                placeholder="• Detailed scope of work, deliverable, or specification&#10;• Second deliverable or milestone (Press Enter to automatically add next bullet)"
+                value={line.description}
+                onKeyDown={(e) => handleDescriptionKeyDown(e, line.id, line.description)}
+                onChange={(e) => updateLine(line.id, { description: e.target.value })}
+              />
+              <p className="text-[10px] text-gray-400 italic">
+                Tip: Press <kbd className="px-1 py-0.5 bg-gray-100 border rounded text-[9px] font-mono">Enter</kbd> to automatically continue bullet points.
+              </p>
+            </div>
           )}
 
           {/* Attached Thumbnail Preview */}
@@ -2266,30 +2528,69 @@ export function QuotationPaperEditor({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
             {/* Terms & Conditions Block */}
             {showTerms && (
-              <div className="space-y-1.5 text-xs">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-gray-700">Terms &amp; Conditions</label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const defaultQuoteTerms =
-                        standardTerms ||
-                        '1. 50% advance payment required upon quotation acceptance.\n2. Quotation is valid for 30 days from the date of issue.\n3. Estimated project delivery within agreed timeline after receiving all assets.\n4. Applicable taxes (GST) will be charged as per prevailing government norms.\n5. Any additional work or scope changes will be quoted separately.';
-                      setTerms(defaultQuoteTerms);
-                      toast.success('Standard quotation terms loaded.');
-                    }}
-                    className="text-[11px] text-purple-700 hover:underline font-semibold"
-                  >
-                    Use Standard Terms
-                  </button>
+              <div className="space-y-2 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <label className="font-bold text-gray-700">Terms &amp; Conditions</label>
+                    <span className="text-[10px] text-gray-400 font-normal hidden sm:inline">
+                      (Supports bullet points &amp; numbered terms)
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleAddBulletToTerms}
+                      className="px-2 py-0.5 rounded bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 font-semibold text-[11px] inline-flex items-center gap-1 transition-colors"
+                      title="Insert a bullet point"
+                    >
+                      <span className="text-sm font-bold leading-none">•</span>
+                      Add Bullet Point
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddNumberToTerms}
+                      className="px-2 py-0.5 rounded bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 font-semibold text-[11px] inline-flex items-center gap-1 transition-colors"
+                      title="Insert a numbered point"
+                    >
+                      <span className="text-xs font-bold leading-none">1.</span>
+                      Numbered Point
+                    </button>
+                    {terms.trim() && (
+                      <button
+                        type="button"
+                        onClick={handleConvertTermsToBullets}
+                        className="px-2 py-0.5 rounded bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 text-[10px] hover:text-purple-700 transition-colors"
+                        title="Format all lines as bullet points"
+                      >
+                        Convert to Bullets
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const defaultQuoteTerms =
+                          standardTerms ||
+                          '• 50% advance payment required upon quotation acceptance.\n• Quotation is valid for 30 days from the date of issue.\n• Estimated project delivery within agreed timeline after receiving all assets.\n• Applicable taxes (GST) will be charged as per prevailing government norms.\n• Any additional work or scope changes will be quoted separately.';
+                        setTerms(defaultQuoteTerms);
+                        toast.success('Standard quotation terms loaded.');
+                      }}
+                      className="text-[11px] text-purple-700 hover:underline font-semibold ml-1"
+                    >
+                      Use Standard Terms
+                    </button>
+                  </div>
                 </div>
                 <textarea
-                  rows={4}
-                  className="input text-xs"
-                  placeholder="1. 50% advance before kickoff.&#10;2. Valid for 30 days."
+                  rows={6}
+                  className="input p-3 text-xs sm:text-sm w-full min-h-[140px] resize-y text-gray-800 leading-relaxed bg-white border border-gray-300 rounded-md focus:border-purple-600 focus:ring-1 focus:ring-purple-600 shadow-inner"
+                  placeholder="• 50% advance payment required upon quotation acceptance.&#10;• Quotation is valid for 30 days from issue date. (Press Enter to continue bullets)"
                   value={terms}
+                  onKeyDown={handleTermsKeyDown}
                   onChange={(e) => setTerms(e.target.value)}
                 />
+                <p className="text-[10px] text-gray-400 italic">
+                  Tip: Press <kbd className="px-1 py-0.5 bg-gray-100 border rounded text-[9px] font-mono">Enter</kbd> to automatically add the next bullet or number.
+                </p>
               </div>
             )}
 

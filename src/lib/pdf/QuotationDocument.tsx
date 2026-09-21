@@ -44,12 +44,16 @@ function TermsBlock({ text }: { text: string }) {
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
   return (
     <View style={styles.termsList}>
-      {lines.map((line, i) => (
-        <View style={styles.termsLine} key={i}>
-          <Text style={styles.termsIndex}>{i + 1}.</Text>
-          <Text style={styles.termsText}>{line}</Text>
-        </View>
-      ))}
+      {lines.map((line, i) => {
+        const isBullet = /^[•\-\*]/.test(line);
+        const cleanLine = line.replace(/^([•\-\*]|\d+[\.\)])\s*/, '');
+        return (
+          <View style={styles.termsLine} key={i}>
+            <Text style={styles.termsIndex}>{isBullet ? '•' : `${i + 1}.`}</Text>
+            <Text style={styles.termsText}>{cleanLine || line}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 }

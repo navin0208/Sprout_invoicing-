@@ -108,6 +108,85 @@ export function DocumentForm({
     setLines((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
   }
 
+  function addBulletToLine(i: number, currentVal: string) {
+    const nextVal = currentVal ? currentVal.trimEnd() + '\n• ' : '• ';
+    updateLine(i, { description: nextVal });
+  }
+
+  function handleLineKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>, i: number, currentVal: string) {
+    if (e.key === 'Enter') {
+      const textarea = e.currentTarget;
+      const selStart = textarea.selectionStart;
+      const selEnd = textarea.selectionEnd;
+      const textBefore = currentVal.slice(0, selStart);
+      const textAfter = currentVal.slice(selEnd);
+
+      const lastLineBreak = textBefore.lastIndexOf('\n');
+      const currentLine = lastLineBreak === -1 ? textBefore : textBefore.slice(lastLineBreak + 1);
+
+      const bulletMatch = currentLine.match(/^(\s*)([•\-\*])\s*(.*)$/);
+
+      if (bulletMatch) {
+        e.preventDefault();
+        const [_, indent, bullet, content] = bulletMatch;
+        if (!content.trim()) {
+          const newTextBefore = lastLineBreak === -1 ? '' : textBefore.slice(0, lastLineBreak + 1);
+          const nextVal = newTextBefore + textAfter;
+          updateLine(i, { description: nextVal });
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = newTextBefore.length;
+          }, 0);
+        } else {
+          const insertion = `\n${indent}${bullet} `;
+          const nextVal = textBefore + insertion + textAfter;
+          updateLine(i, { description: nextVal });
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = selStart + insertion.length;
+          }, 0);
+        }
+      }
+    }
+  }
+
+  function handleAddBulletToTerms() {
+    setTerms((prev) => (prev ? prev.trimEnd() + '\n• ' : '• '));
+  }
+
+  function handleTermsKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter') {
+      const textarea = e.currentTarget;
+      const selStart = textarea.selectionStart;
+      const selEnd = textarea.selectionEnd;
+      const textBefore = terms.slice(0, selStart);
+      const textAfter = terms.slice(selEnd);
+
+      const lastLineBreak = textBefore.lastIndexOf('\n');
+      const currentLine = lastLineBreak === -1 ? textBefore : textBefore.slice(lastLineBreak + 1);
+
+      const bulletMatch = currentLine.match(/^(\s*)([•\-\*])\s*(.*)$/);
+
+      if (bulletMatch) {
+        e.preventDefault();
+        const [_, indent, bullet, content] = bulletMatch;
+        if (!content.trim()) {
+          const newTextBefore = lastLineBreak === -1 ? '' : textBefore.slice(0, lastLineBreak + 1);
+          const nextVal = newTextBefore + textAfter;
+          setTerms(nextVal);
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = newTextBefore.length;
+          }, 0);
+        } else {
+          const insertion = `\n${indent}${bullet} `;
+          const nextVal = textBefore + insertion + textAfter;
+          setTerms(nextVal);
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = selStart + insertion.length;
+          }, 0);
+        }
+      }
+    }
+  }
+
   function addFromCatalog(itemId: string) {
     const item = catalog.find((c) => c.id === itemId);
     if (!item) return;
@@ -267,12 +346,24 @@ export function DocumentForm({
             });
             return (
               <div key={i} className="group grid grid-cols-12 gap-3 px-5 py-3 items-start hover:bg-gold-50/40 transition-colors">
-                <div className="col-span-12 lg:col-span-4">
+                <div className="col-span-12 lg:col-span-4 space-y-1">
+                  <div className="flex items-center justify-between px-0.5">
+                    <span className="text-[11px] font-medium text-gray-500">Description &amp; Deliverables</span>
+                    <button
+                      type="button"
+                      onClick={() => addBulletToLine(i, line.description)}
+                      className="px-1.5 py-0.5 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-[10px] font-semibold inline-flex items-center gap-1 transition-colors"
+                      title="Add bullet point"
+                    >
+                      <span className="font-bold">•</span> Add Bullet
+                    </button>
+                  </div>
                   <textarea
-                    className="input resize-y min-h-[38px]"
-                    rows={line.description.includes('\n') ? 3 : 1}
-                    placeholder="What are you billing for? (extra lines become bullet points)"
+                    className="input resize-y min-h-[80px] text-xs leading-relaxed"
+                    rows={line.description.includes('\n') ? 4 : 2}
+                    placeholder="What are you billing for? (Press Enter to continue bullet points)"
                     value={line.description}
+                    onKeyDown={(e) => handleLineKeyDown(e, i, line.description)}
                     onChange={(e) => updateLine(i, { description: e.target.value })}
                     required
                   />
@@ -354,23 +445,34 @@ export function DocumentForm({
           <div>
             <div className="flex items-center justify-between gap-3 mb-1.5">
               <label className="text-xs font-medium text-gray-500">Terms &amp; conditions</label>
-              {standardTerms && terms.trim() !== standardTerms.trim() ? (
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="text-[11px] font-medium text-brand-600 hover:text-gold-700 inline-flex items-center gap-1"
-                  onClick={() => setTerms(standardTerms)}
-                  title="Replace with the standard terms from Settings"
+                  className="text-[11px] font-semibold text-purple-700 hover:text-purple-900 inline-flex items-center gap-1"
+                  onClick={handleAddBulletToTerms}
+                  title="Add bullet point"
                 >
-                  <Icon name="copy" className="w-3 h-3" />
-                  Use my standard terms
+                  <span className="text-sm font-bold leading-none">•</span> Add Bullet Point
                 </button>
-              ) : null}
+                {standardTerms && terms.trim() !== standardTerms.trim() ? (
+                  <button
+                    type="button"
+                    className="text-[11px] font-medium text-brand-600 hover:text-gold-700 inline-flex items-center gap-1"
+                    onClick={() => setTerms(standardTerms)}
+                    title="Replace with the standard terms from Settings"
+                  >
+                    <Icon name="copy" className="w-3 h-3" />
+                    Use my standard terms
+                  </button>
+                ) : null}
+              </div>
             </div>
             <textarea
-              className="input"
-              rows={4}
-              placeholder="One per line — they'll be numbered on the PDF"
+              className="input resize-y min-h-[120px] text-xs leading-relaxed"
+              rows={5}
+              placeholder="• One per line (Press Enter to continue bullet points)"
               value={terms}
+              onKeyDown={handleTermsKeyDown}
               onChange={(e) => setTerms(e.target.value)}
             />
             <p className="text-[11px] text-gray-400 mt-1.5">

@@ -8,6 +8,7 @@ export function splitDescription(description: string): { title: string; bullets:
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean);
-  const [title, ...bullets] = lines.length ? lines : [''];
+  const [title, ...rawBullets] = lines.length ? lines : [''];
+  const bullets = rawBullets.map((b) => b.replace(/^[•\-\*]\s*/, ''));
   return { title, bullets };
 }
