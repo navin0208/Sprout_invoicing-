@@ -346,21 +346,21 @@ export function DocumentForm({
             });
             return (
               <div key={i} className="group grid grid-cols-12 gap-3 px-5 py-3 items-start hover:bg-gold-50/40 transition-colors">
-                <div className="col-span-12 lg:col-span-4 space-y-1">
+                <div className="col-span-12 lg:col-span-5 space-y-1">
                   <div className="flex items-center justify-between px-0.5">
-                    <span className="text-[11px] font-medium text-gray-500">Description &amp; Deliverables</span>
+                    <span className="text-[11px] font-semibold text-gray-700">Description &amp; Deliverables</span>
                     <button
                       type="button"
                       onClick={() => addBulletToLine(i, line.description)}
-                      className="px-1.5 py-0.5 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-[10px] font-semibold inline-flex items-center gap-1 transition-colors"
+                      className="px-2 py-0.5 rounded bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-[11px] font-bold inline-flex items-center gap-1 transition-colors"
                       title="Add bullet point"
                     >
                       <span className="font-bold">•</span> Add Bullet
                     </button>
                   </div>
                   <textarea
-                    className="input resize-y min-h-[80px] text-xs leading-relaxed"
-                    rows={line.description.includes('\n') ? 4 : 2}
+                    className="input resize-y min-h-[140px] text-xs sm:text-sm p-3 leading-relaxed"
+                    rows={line.description.includes('\n') ? 6 : 4}
                     placeholder="What are you billing for? (Press Enter to continue bullet points)"
                     value={line.description}
                     onKeyDown={(e) => handleLineKeyDown(e, i, line.description)}

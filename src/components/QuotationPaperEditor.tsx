@@ -999,10 +999,10 @@ export function QuotationPaperEditor({
     return (
       <tr key={line.id} className="hover:bg-purple-50/20 transition-colors">
         {/* Item Name + Secondary Action Buttons (+ Add Description, + Add Image) */}
-        <td className="py-3 px-3 align-top space-y-1.5">
+        <td className="py-3 px-3 align-top space-y-2 min-w-[360px] md:min-w-[480px]">
           <input
             type="text"
-            className="input py-1 text-xs font-semibold text-brand-900"
+            className="input py-1.5 text-xs sm:text-sm font-semibold text-brand-900"
             placeholder="Item name / Title"
             value={line.name}
             onChange={(e) => updateLine(line.id, { name: e.target.value })}
@@ -1032,7 +1032,7 @@ export function QuotationPaperEditor({
                   addBulletToLineDescription(line.id, line.description);
                 }
               }}
-              className="text-purple-700 hover:text-purple-900 font-semibold inline-flex items-center gap-1 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded border border-purple-200 transition-colors"
+              className="text-purple-700 hover:text-purple-900 font-semibold inline-flex items-center gap-1 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-md border border-purple-200 transition-colors shadow-2xs"
               title="Add bullet points to item specifications"
             >
               <span className="font-bold text-sm leading-none">•</span>
@@ -1081,55 +1081,75 @@ export function QuotationPaperEditor({
 
           {/* Expanded Description Box */}
           {line.showDescription && (
-            <div className="mt-2 rounded-lg border border-purple-200 bg-purple-50/20 p-2 space-y-1.5 shadow-2xs">
-              <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
-                <span className="font-semibold text-gray-700 flex items-center gap-1">
-                  <Icon name="fileSpreadsheet" className="w-3 h-3 text-purple-600" />
-                  Item Specifications / Deliverables
+            <div className="mt-2.5 rounded-xl border border-purple-300 bg-purple-50/30 p-3 space-y-2 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs">
+                <span className="font-bold text-gray-800 flex items-center gap-1.5">
+                  <Icon name="fileSpreadsheet" className="w-3.5 h-3.5 text-purple-700" />
+                  Item Specifications &amp; Deliverables
                 </span>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => addBulletToLineDescription(line.id, line.description)}
-                    className="px-2 py-0.5 rounded bg-white hover:bg-purple-100 text-purple-800 border border-purple-300 font-semibold text-[11px] inline-flex items-center gap-1 shadow-2xs transition-colors"
+                    className="px-2.5 py-1 rounded-md bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300 font-bold text-xs inline-flex items-center gap-1.5 shadow-2xs transition-colors"
                     title="Insert bullet point"
                   >
-                    <span className="font-bold text-sm leading-none">•</span>
-                    Add Bullet
+                    <span className="font-black text-base leading-none text-purple-800">•</span>
+                    Add Bullet Point
                   </button>
                   <button
                     type="button"
                     onClick={() => addNumberToLineDescription(line.id, line.description)}
-                    className="px-2 py-0.5 rounded bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 font-medium text-[11px] inline-flex items-center gap-1 shadow-2xs transition-colors"
+                    className="px-2.5 py-1 rounded-md bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 font-semibold text-xs inline-flex items-center gap-1 shadow-2xs transition-colors"
                     title="Insert numbered item"
                   >
                     <span className="font-bold text-xs leading-none">1.</span>
-                    Numbered
+                    Numbered Item
                   </button>
                   {line.description.trim() && (
                     <button
                       type="button"
                       onClick={() => formatLineDescriptionAsBullets(line.id, line.description)}
-                      className="px-2 py-0.5 rounded bg-white hover:bg-gray-100 text-gray-600 border border-gray-300 text-[10px] hover:text-purple-700 shadow-2xs transition-colors"
+                      className="px-2 py-1 rounded-md bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 text-xs hover:text-purple-800 shadow-2xs transition-colors"
                       title="Convert all lines to bullets"
                     >
-                      Format Bullets
+                      Format as Bullets
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`desc-textarea-${line.id}`) as HTMLTextAreaElement | null;
+                      if (el) {
+                        const curH = el.offsetHeight;
+                        el.style.height = curH > 280 ? '220px' : '400px';
+                      }
+                    }}
+                    className="px-2 py-1 rounded-md bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-medium shadow-2xs transition-colors"
+                    title="Toggle larger box height"
+                  >
+                    ↕ Expand Height
+                  </button>
                 </div>
               </div>
 
               <textarea
-                rows={4}
-                className="input p-2.5 text-xs sm:text-sm w-full min-h-[105px] resize-y text-gray-800 leading-relaxed bg-white border border-gray-300 rounded-md focus:border-purple-600 focus:ring-1 focus:ring-purple-600 shadow-inner"
-                placeholder="• Detailed scope of work, deliverable, or specification&#10;• Second deliverable or milestone (Press Enter to automatically add next bullet)"
+                id={`desc-textarea-${line.id}`}
+                rows={9}
+                className="input p-3.5 text-xs sm:text-sm w-full min-h-[220px] resize-y text-gray-900 leading-relaxed bg-white border border-gray-300 rounded-lg focus:border-purple-600 focus:ring-2 focus:ring-purple-200 shadow-inner"
+                placeholder="• Detailed scope of work, deliverable, or specification&#10;• Second deliverable or milestone&#10;• Technical requirements or deliverables&#10;• (Press Enter to automatically create the next bullet point)"
                 value={line.description}
                 onKeyDown={(e) => handleDescriptionKeyDown(e, line.id, line.description)}
                 onChange={(e) => updateLine(line.id, { description: e.target.value })}
               />
-              <p className="text-[10px] text-gray-400 italic">
-                Tip: Press <kbd className="px-1 py-0.5 bg-gray-100 border rounded text-[9px] font-mono">Enter</kbd> to automatically continue bullet points.
-              </p>
+              <div className="flex items-center justify-between text-[11px] text-gray-500 pt-0.5">
+                <span>
+                  Tip: Type <kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[10px] font-mono shadow-2xs">Enter</kbd> to automatically add the next bullet point.
+                </span>
+                <span className="text-gray-400 hidden sm:inline">
+                  Drag bottom-right corner ↘ to expand box height
+                </span>
+              </div>
             </div>
           )}
 
@@ -1872,11 +1892,11 @@ export function QuotationPaperEditor({
         {/* 4. LINE ITEM TABLE (Center Section)                      */}
         {/* ========================================================= */}
         <div className="bg-white border-x border-gray-200/90 p-4 sm:p-6 overflow-x-auto">
-          <table className="w-full text-xs min-w-[780px] border border-gray-200 rounded-lg overflow-hidden">
+          <table className="w-full text-xs min-w-[880px] border border-gray-200 rounded-lg overflow-hidden">
             {/* Table Header: Solid Purple Banner */}
             <thead>
               <tr className="bg-[#4C1D95] text-white uppercase text-[10px] font-bold tracking-wider">
-                <th className="py-3 px-3 text-left w-64">Item / Service</th>
+                <th className="py-3 px-3 text-left min-w-[360px] md:min-w-[480px]">Item / Service</th>
                 {columnConfig.hsn && (
                   <th className="py-3 px-2 text-center w-24 relative group">
                     <span>{columnConfig.hsnLabel}</span>
